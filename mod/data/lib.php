@@ -3925,3 +3925,41 @@ function data_process_submission(stdClass $mod, $fields, stdClass $datarecord) {
 
     return $result;
 }
+/**
+ * Delete values from data_content if multimenu editied.
+ *
+ * @param array $oldvalues The old values of multimenu field.
+ * @param array $newvalues The new values of multimenu field.
+ * @param object $data The data object for this activity.
+ * @param int $fid ID for the multimenu field (for view existing user's selected content).
+ */
+function edit_change_values($oldvalues, $newvalues, $data, $fid) {
+    global $DB;
+    // Generate unique editied values.
+    $oldvalues = array_filter($oldvalues);
+    $newvalues = array_filter($newvalues);
+    $diff_oldvalues = array_diff(array_values($newvalues), array_values($oldvalues));
+    $diff_newvalues = array_diff(array_values($oldvalues), array_values($newvalues));
+    $array = array_merge($diff_oldvalues, $diff_newvalues);
+    $array = array_values(array_unique($array));
+    // If values editied in multimenu.
+    if (!empty($array)) {
+        // Get all submitied data_records.
+        $records = $DB->get_records('data_records', array('dataid' => $data->id));
+        foreach ($records as $record) {
+            // Get content associated with specific data_records and multimenu field.
+            $singleentry = $DB->get_record('data_content',
+                    array('recordid' => $record->id, 'fieldid' => $fid));
+            // Looping on all all editied values in multimenu to match with existing user's content.
+            for ($j = 0; $j <= count($array) - 1; $j++) {
+                if ($array[$j] == $singleentry->content) {
+                    // In case editied values removed from the multimenu field than existing record on data_content and
+                    // data_records will be deleted.
+                    $DB->delete_records('data_content', array('recordid' => $record->id), true);
+                    $DB->delete_records('data_records', array('id' => $record->id), true);
+                }
+            }
+        }
+    }
+}
+
