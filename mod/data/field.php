@@ -150,6 +150,11 @@ switch ($mode) {
 
                 for ($i=1; $i<=10; $i++) {
                     if (isset($fieldinput->{'param'.$i})) {
+                         if ($field->type == 'multimenu') { // If multimenu field editied.
+                            $oldvalues = explode("\n", $field->field->{'param' . $i});
+                            $newvalues = explode("\n", $fieldinput->{'param' . $i});
+                            edit_change_values($oldvalues, $newvalues, $data, $fid);
+                        }
                         $field->field->{'param'.$i} = $fieldinput->{'param'.$i};
                     } else {
                         $field->field->{'param'.$i} = '';
